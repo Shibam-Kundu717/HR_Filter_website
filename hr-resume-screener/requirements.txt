@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+pdfplumber
+openai
+pydantic
+resend
+python-dotenv
+python-multipart

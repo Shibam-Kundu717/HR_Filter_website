@@ -1,0 +1,1377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AuraScreener - AI Candidate Evaluation</title>
+    <meta name="description" content="AI-driven resume parser and skill scoring dashboard for modern recruiting teams.">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-color: #080c14;
+            --card-bg: rgba(17, 24, 39, 0.65);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --text-primary: #f3f4f6;
+            --text-secondary: #9ca3af;
+            --primary: #6366f1;
+            --primary-glow: rgba(99, 102, 241, 0.15);
+            --secondary: #a855f7;
+            --accent-success: #10b981;
+            --accent-success-glow: rgba(16, 185, 129, 0.15);
+            --accent-error: #ef4444;
+            --accent-error-glow: rgba(239, 68, 68, 0.15);
+            --font-display: 'Outfit', sans-serif;
+            --font-body: 'Inter', sans-serif;
+            --radius-lg: 16px;
+            --radius-md: 10px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(168, 85, 247, 0.05) 0%, transparent 40%);
+            background-attachment: fixed;
+            font-family: var(--font-body);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        header {
+            padding: 24px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--card-border);
+            backdrop-filter: blur(12px);
+            background: rgba(8, 12, 20, 0.5);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 38px;
+            height: 38px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 14px rgba(99, 102, 241, 0.3);
+        }
+
+        .logo-icon svg {
+            width: 20px;
+            height: 20px;
+            fill: white;
+        }
+
+        .logo-text {
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 1.4rem;
+            letter-spacing: -0.5px;
+            background: linear-gradient(to right, #ffffff, #d1d5db);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .badge-premium {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(168, 85, 247, 0.1));
+            border: 1px solid rgba(168, 85, 247, 0.2);
+            color: #d8b4fe;
+            padding: 4px 10px;
+            border-radius: 30px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .main-container {
+            flex: 1;
+            max-width: 1300px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 40px;
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 40px;
+        }
+
+        @media (max-width: 1024px) {
+            .main-container {
+                grid-template-columns: 1fr;
+                padding: 24px;
+                gap: 30px;
+            }
+        }
+
+        .section-panel {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            backdrop-filter: blur(16px);
+            border-radius: var(--radius-lg);
+            padding: 32px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            transition: var(--transition);
+        }
+
+        .section-panel:hover {
+            border-color: rgba(255, 255, 255, 0.12);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        h2.panel-title {
+            font-family: var(--font-display);
+            font-weight: 600;
+            font-size: 1.6rem;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        h2.panel-title svg {
+            width: 24px;
+            height: 24px;
+            stroke: var(--primary);
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input[type="text"] {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-md);
+            padding: 14px 16px;
+            font-family: var(--font-body);
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-glow);
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .input-hint {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: -2px;
+        }
+
+        /* File Upload Styling */
+        .upload-area {
+            border: 2px dashed var(--card-border);
+            background: rgba(0, 0, 0, 0.15);
+            border-radius: var(--radius-lg);
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            position: relative;
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+        }
+
+        .upload-area:hover, .upload-area.drag-over {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.04);
+            box-shadow: 0 0 16px var(--primary-glow);
+        }
+
+        .upload-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--card-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            transition: var(--transition);
+        }
+
+        .upload-area:hover .upload-icon, .upload-area.drag-over .upload-icon {
+            color: var(--primary);
+            background: rgba(99, 102, 241, 0.1);
+            border-color: rgba(99, 102, 241, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .upload-area svg {
+            width: 28px;
+            height: 28px;
+        }
+
+        .upload-text {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .upload-title {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .upload-subtitle {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .file-selected-info {
+            display: none;
+            width: 100%;
+            background: rgba(99, 102, 241, 0.08);
+            border: 1px dashed rgba(99, 102, 241, 0.3);
+            border-radius: var(--radius-md);
+            padding: 12px 16px;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .file-details {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 0;
+        }
+
+        .file-details svg {
+            width: 20px;
+            height: 20px;
+            stroke: var(--primary);
+            flex-shrink: 0;
+        }
+
+        .file-name {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .file-size {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .btn-remove-file {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+
+        .btn-remove-file:hover {
+            color: var(--accent-error);
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        /* Buttons */
+        .btn-submit {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            padding: 16px;
+            font-family: var(--font-display);
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.25);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-submit::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+            transition: 0.5s;
+        }
+
+        .btn-submit:hover::after {
+            left: 100%;
+        }
+
+        .btn-submit:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.35);
+        }
+
+        .btn-submit:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .btn-submit:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* Results / Dashboard Panel States */
+        .placeholder-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            height: 100%;
+            min-height: 400px;
+            gap: 20px;
+            color: var(--text-secondary);
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        .placeholder-state svg {
+            width: 64px;
+            height: 64px;
+            stroke: rgba(255, 255, 255, 0.15);
+        }
+
+        .placeholder-text {
+            font-family: var(--font-display);
+            font-size: 1.15rem;
+            font-weight: 500;
+            max-width: 320px;
+        }
+
+        /* Loading state steps */
+        .loading-state {
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            height: 100%;
+            min-height: 450px;
+            gap: 32px;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        .spinner-outer {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 8px;
+        }
+
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 3px solid rgba(99, 102, 241, 0.15);
+            border-top: 3px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .steps-container {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            max-width: 380px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .step-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            opacity: 0.4;
+            transition: var(--transition);
+        }
+
+        .step-item.active {
+            opacity: 1;
+        }
+
+        .step-item.completed {
+            opacity: 0.7;
+        }
+
+        .step-dot {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 2px solid var(--card-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            background: var(--bg-color);
+            transition: var(--transition);
+            flex-shrink: 0;
+        }
+
+        .step-item.active .step-dot {
+            border-color: var(--primary);
+            box-shadow: 0 0 8px var(--primary-glow);
+        }
+
+        .step-item.active .step-dot::after {
+            content: '';
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--primary);
+            animation: pulse 1.5s infinite;
+        }
+
+        .step-item.completed .step-dot {
+            border-color: var(--accent-success);
+            background: var(--accent-success);
+        }
+
+        .step-item.completed .step-dot::after {
+            content: '✓';
+            color: white;
+            font-size: 0.65rem;
+            font-weight: bold;
+        }
+
+        .step-label {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .step-item.active .step-label {
+            color: var(--text-primary);
+        }
+
+        /* Results dashboard */
+        .results-state {
+            display: none;
+            flex-direction: column;
+            gap: 28px;
+            animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 20px;
+            border-bottom: 1px solid var(--card-border);
+            padding-bottom: 20px;
+        }
+
+        .candidate-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            min-width: 0;
+        }
+
+        .candidate-name {
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .candidate-email {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .candidate-email:hover {
+            color: var(--primary);
+        }
+
+        .candidate-email svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .score-circle-wrapper {
+            position: relative;
+            width: 90px;
+            height: 90px;
+            flex-shrink: 0;
+        }
+
+        .score-svg {
+            transform: rotate(-90deg);
+            width: 100%;
+            height: 100%;
+        }
+
+        .score-bg-circle {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.05);
+            stroke-width: 8;
+        }
+
+        .score-fill-circle {
+            fill: none;
+            stroke: url(#scoreGradient);
+            stroke-width: 8;
+            stroke-linecap: round;
+            stroke-dasharray: 251.2;
+            stroke-dashoffset: 251.2;
+            transition: stroke-dashoffset 1.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .score-text-val {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .score-num {
+            font-family: var(--font-display);
+            font-size: 1.45rem;
+            font-weight: 800;
+            color: white;
+            line-height: 1.1;
+        }
+
+        .score-lbl {
+            font-size: 0.65rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Status & Alert Box */
+        .status-card {
+            border-radius: var(--radius-md);
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            border: 1px solid var(--card-border);
+        }
+
+        .status-card.qualified {
+            background: var(--accent-success-glow);
+            border-color: rgba(16, 185, 129, 0.25);
+            color: #a7f3d0;
+        }
+
+        .status-card.needs-review {
+            background: var(--accent-error-glow);
+            border-color: rgba(239, 68, 68, 0.25);
+            color: #fca5a5;
+        }
+
+        .status-badge-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .qualified .status-badge-icon {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--accent-success);
+        }
+
+        .needs-review .status-badge-icon {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--accent-error);
+        }
+
+        .status-info-text {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .status-info-title {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .status-info-desc {
+            font-size: 0.8rem;
+            opacity: 0.85;
+        }
+
+        /* Skill breakdown cards */
+        .skills-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        .skills-card {
+            background: rgba(0, 0, 0, 0.15);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-md);
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .skills-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .skills-card-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .skills-count-badge {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--card-border);
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .tag-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .tag {
+            font-size: 0.8rem;
+            padding: 6px 12px;
+            border-radius: 30px;
+            font-weight: 500;
+            border: 1px solid transparent;
+        }
+
+        .tag.tag-matched {
+            background: rgba(16, 185, 129, 0.06);
+            border-color: rgba(16, 185, 129, 0.2);
+            color: #a7f3d0;
+        }
+
+        .tag.tag-extra {
+            background: rgba(168, 85, 247, 0.06);
+            border-color: rgba(168, 85, 247, 0.2);
+            color: #f5f3ff;
+        }
+
+        .tag.tag-candidate {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(255, 255, 255, 0.08);
+            color: var(--text-primary);
+        }
+
+        .tag-list-empty {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        /* Email Notification Banner */
+        .email-status-banner {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-radius: var(--radius-md);
+            padding: 14px 18px;
+            background: rgba(99, 102, 241, 0.05);
+            border: 1px solid rgba(99, 102, 241, 0.15);
+            margin-top: 10px;
+        }
+
+        .email-status-banner svg {
+            width: 20px;
+            height: 20px;
+            stroke: var(--primary);
+            flex-shrink: 0;
+        }
+
+        .email-status-text {
+            font-size: 0.85rem;
+            color: #e0e7ff;
+            line-height: 1.4;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 24px;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            border-top: 1px solid var(--card-border);
+            margin-top: auto;
+            backdrop-filter: blur(12px);
+            background: rgba(8, 12, 20, 0.4);
+        }
+
+        /* Animations */
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.9); opacity: 0.4; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(0.9); opacity: 0.4; }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Error state styling */
+        .error-card {
+            display: none;
+            background: var(--accent-error-glow);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            color: #fca5a5;
+            font-size: 0.85rem;
+            align-items: center;
+            gap: 12px;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .error-card svg {
+            width: 20px;
+            height: 20px;
+            stroke: var(--accent-error);
+            flex-shrink: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header>
+        <div class="logo-container">
+            <div class="logo-icon">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+                </svg>
+            </div>
+            <span class="logo-text">AuraScreener</span>
+        </div>
+        <div class="badge-premium">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2L2 22h20L12 2z"/>
+            </svg>
+            AI Agent
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="main-container">
+        
+        <!-- Left Panel (Inputs) -->
+        <section class="section-panel">
+            <h2 class="panel-title">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+                </svg>
+                Evaluation Criteria
+            </h2>
+
+            <form id="screener-form" onsubmit="event.preventDefault(); return false;" style="display: flex; flex-direction: column; gap: 20px;">
+                <!-- Job Title -->
+                <div class="form-group">
+                    <label for="job-title">Job Title</label>
+                    <input type="text" id="job-title" placeholder="e.g. Senior Backend Engineer" required>
+                </div>
+
+                <!-- Required Skills -->
+                <div class="form-group">
+                    <label for="required-skills">Required Skills</label>
+                    <input type="text" id="required-skills" placeholder="e.g. Python, FastAPI, Docker, PostgreSQL" required>
+                    <span class="input-hint">Provide skills separated by commas</span>
+                </div>
+
+                <!-- Resume File Upload -->
+                <div class="form-group">
+                    <label>Candidate Resume (PDF)</label>
+                    <div class="upload-area" id="drop-zone">
+                        <div class="upload-icon">
+                            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                            </svg>
+                        </div>
+                        <div class="upload-text">
+                            <span class="upload-title">Drag & drop resume PDF here</span>
+                            <span class="upload-subtitle">or click to browse files</span>
+                        </div>
+                        <input type="file" id="file-input" accept=".pdf" style="display: none;">
+                    </div>
+
+                    <!-- Selected file visualization -->
+                    <div class="file-selected-info" id="file-info">
+                        <div class="file-details">
+                            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            <div style="min-width: 0;">
+                                <div class="file-name" id="selected-file-name">filename.pdf</div>
+                                <div class="file-size" id="selected-file-size">0 KB</div>
+                            </div>
+                        </div>
+                        <button type="button" class="btn-remove-file" id="btn-remove-file" title="Remove file">
+                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Error Card (In-form) -->
+                <div class="error-card" id="error-card">
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                    <span id="error-text">An error occurred during evaluation.</span>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="btn-submit" id="btn-submit">
+                    Screen Candidate
+                </button>
+            </form>
+        </section>
+
+        <!-- Right Panel (Results Dashboard) -->
+        <section class="section-panel" style="justify-content: center;">
+            
+            <!-- State 1: Placeholder -->
+            <div class="placeholder-state" id="panel-placeholder">
+                <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                <div class="placeholder-text">Enter evaluation criteria and upload a resume to view match analytics.</div>
+            </div>
+
+            <!-- State 2: Loading State -->
+            <div class="loading-state" id="panel-loading">
+                <div class="spinner-outer">
+                    <div class="spinner"></div>
+                </div>
+                
+                <div class="steps-container">
+                    <div class="step-item" id="step-1">
+                        <div class="step-dot"></div>
+                        <div class="step-label">Reading PDF resume document</div>
+                    </div>
+                    <div class="step-item" id="step-2">
+                        <div class="step-dot"></div>
+                        <div class="step-label">Extracting candidate data with AI</div>
+                    </div>
+                    <div class="step-item" id="step-3">
+                        <div class="step-dot"></div>
+                        <div class="step-label">Scoring skill compatibility metrics</div>
+                    </div>
+                    <div class="step-item" id="step-4">
+                        <div class="step-dot"></div>
+                        <div class="step-label">Sending invitation email notice</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- State 3: Results Dashboard -->
+            <div class="results-state" id="panel-results">
+                <!-- Header: Name, Email & Score circle -->
+                <div class="results-header">
+                    <div class="candidate-meta">
+                        <div class="candidate-name" id="result-name">Jane Doe</div>
+                        <a href="#" class="candidate-email" id="result-email">
+                            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                            </svg>
+                            <span id="result-email-text">jane.doe@example.com</span>
+                        </a>
+                    </div>
+                    <div class="score-circle-wrapper">
+                        <svg class="score-svg">
+                            <defs>
+                                <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="var(--primary)" />
+                                    <stop offset="100%" stop-color="var(--secondary)" />
+                                </linearGradient>
+                            </defs>
+                            <circle class="score-bg-circle" cx="45" cy="45" r="40"></circle>
+                            <circle class="score-fill-circle" id="score-ring" cx="45" cy="45" r="40"></circle>
+                        </svg>
+                        <div class="score-text-val">
+                            <div class="score-num" id="result-score">0</div>
+                            <div class="score-lbl">Score</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Status Banner -->
+                <div class="status-card" id="result-status-card">
+                    <div class="status-badge-icon" id="result-status-icon">
+                        <!-- Will be dynamically set -->
+                    </div>
+                    <div class="status-info-text">
+                        <div class="status-info-title" id="result-status-title">Qualified Candidate</div>
+                        <div class="status-info-desc" id="result-status-desc">Meets all primary skill requirements.</div>
+                    </div>
+                </div>
+
+                <!-- Skills Breakdown -->
+                <div class="skills-grid">
+                    <!-- Matched Skills -->
+                    <div class="skills-card">
+                        <div class="skills-card-header">
+                            <div class="skills-card-title">Matched Requirements</div>
+                            <div class="skills-count-badge" id="count-matched">0</div>
+                        </div>
+                        <div class="tag-list" id="list-matched">
+                            <!-- Matched tags -->
+                        </div>
+                    </div>
+
+                    <!-- Extra / Surplus Skills -->
+                    <div class="skills-card">
+                        <div class="skills-card-header">
+                            <div class="skills-card-title">Surplus / Extra Skills</div>
+                            <div class="skills-count-badge" id="count-extra">0</div>
+                        </div>
+                        <div class="tag-list" id="list-extra">
+                            <!-- Extra tags -->
+                        </div>
+                    </div>
+
+                    <!-- Total Detected Skills -->
+                    <div class="skills-card">
+                        <div class="skills-card-header">
+                            <div class="skills-card-title">All Candidate Skills</div>
+                            <div class="skills-count-badge" id="count-candidate">0</div>
+                        </div>
+                        <div class="tag-list" id="list-candidate">
+                            <!-- Candidate tags -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Resend Email Delivery Banner -->
+                <div class="email-status-banner" id="email-delivery-banner">
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                    </svg>
+                    <div class="email-status-text" id="email-delivery-text">
+                        Resend invitation status details.
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        &copy; 2026 AuraScreener Technologies. Powered by Gemini AI agent.
+    </footer>
+
+    <!-- Interactive Logic -->
+    <script>
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const fileInfo = document.getElementById('file-info');
+        const selectedFileName = document.getElementById('selected-file-name');
+        const selectedFileSize = document.getElementById('selected-file-size');
+        const btnRemoveFile = document.getElementById('btn-remove-file');
+        const screenerForm = document.getElementById('screener-form');
+        const btnSubmit = document.getElementById('btn-submit');
+        const errorCard = document.getElementById('error-card');
+        const errorText = document.getElementById('error-text');
+
+        // Panel states
+        const panelPlaceholder = document.getElementById('panel-placeholder');
+        const panelLoading = document.getElementById('panel-loading');
+        const panelResults = document.getElementById('panel-results');
+
+        let selectedFile = null;
+
+        // Trigger file input dialog
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        // Drag events
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                dropZone.classList.add('drag-over');
+            }, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('drag-over');
+            }, false);
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if (files.length > 0) {
+                handleFileSelect(files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFileSelect(e.target.files[0]);
+            }
+        });
+
+        btnRemoveFile.addEventListener('click', (e) => {
+            e.stopPropagation();
+            resetFileInput();
+        });
+
+        function handleFileSelect(file) {
+            if (file.type !== 'application/pdf') {
+                showError("Please upload a PDF file only.");
+                return;
+            }
+            selectedFile = file;
+            selectedFileName.textContent = file.name;
+            selectedFileSize.textContent = formatBytes(file.size);
+            
+            dropZone.style.display = 'none';
+            fileInfo.style.display = 'flex';
+            hideError();
+        }
+
+        function resetFileInput() {
+            selectedFile = null;
+            fileInput.value = '';
+            dropZone.style.display = 'flex';
+            fileInfo.style.display = 'none';
+        }
+
+        function formatBytes(bytes, decimals = 2) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const dm = decimals < 0 ? 0 : decimals;
+            const sizes = ['Bytes', 'KB', 'MB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+        }
+
+        function showError(msg) {
+            errorText.textContent = msg;
+            errorCard.style.display = 'flex';
+        }
+
+        function hideError() {
+            errorCard.style.display = 'none';
+        }
+
+        // Handle Form Submission
+        screenerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const jobTitle = document.getElementById('job-title').value.trim();
+            const requiredSkills = document.getElementById('required-skills').value.trim();
+
+            if (!jobTitle || !requiredSkills) {
+                showError("Please fill out both job title and skills.");
+                return;
+            }
+
+            if (!selectedFile) {
+                showError("Please upload a candidate resume PDF.");
+                return;
+            }
+
+            hideError();
+            setPanelState('loading');
+            btnSubmit.disabled = true;
+
+            const steps = [
+                { id: 'step-1', delay: 1000 },
+                { id: 'step-2', delay: 2500 },
+                { id: 'step-3', delay: 4000 },
+                { id: 'step-4', delay: 5500 }
+            ];
+
+            // Trigger steps flow animation (simulated sequence for loading experience)
+            let currentStepIdx = 0;
+            const runStepAnimation = () => {
+                if (currentStepIdx < steps.length) {
+                    const step = steps[currentStepIdx];
+                    document.getElementById(step.id).classList.add('active');
+                    if (currentStepIdx > 0) {
+                        document.getElementById(steps[currentStepIdx - 1].id).classList.remove('active');
+                        document.getElementById(steps[currentStepIdx - 1].id).classList.add('completed');
+                    }
+                    currentStepIdx++;
+                    setTimeout(runStepAnimation, 1800);
+                }
+            };
+            runStepAnimation();
+
+            // Prepare API FormData
+            const formData = new FormData();
+            formData.append('job_title', jobTitle);
+            formData.append('required_skills', requiredSkills);
+            formData.append('file', selectedFile);
+
+            try {
+                const response = await fetch('/screen-resume/', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Server returned code ${response.status}`);
+                }
+
+                const result = await response.json();
+                
+                // Complete all steps in UI
+                steps.forEach(step => {
+                    const elem = document.getElementById(step.id);
+                    elem.classList.remove('active');
+                    elem.classList.add('completed');
+                });
+
+                setTimeout(() => {
+                    renderResults(result, jobTitle);
+                    setPanelState('results');
+                    btnSubmit.disabled = false;
+                }, 800);
+
+            } catch (err) {
+                console.error(err);
+                showError(`Evaluation failed: ${err.message || 'Unknown network error'}`);
+                setPanelState('placeholder');
+                btnSubmit.disabled = false;
+            }
+        });
+
+        function setPanelState(state) {
+            panelPlaceholder.style.display = state === 'placeholder' ? 'flex' : 'none';
+            panelLoading.style.display = state === 'loading' ? 'flex' : 'none';
+            panelResults.style.display = state === 'results' ? 'flex' : 'none';
+
+            // Reset loading steps
+            if (state === 'loading') {
+                ['step-1', 'step-2', 'step-3', 'step-4'].forEach(id => {
+                    const elem = document.getElementById(id);
+                    elem.className = 'step-item';
+                });
+            }
+        }
+
+        function renderResults(data, jobTitle) {
+            const candidate = data.candidate || {};
+            const ranking = data.ranking || {};
+            const emailSent = data.email_sent;
+
+            // Basic details
+            document.getElementById('result-name').textContent = candidate.name || 'Applicant';
+            document.getElementById('result-email-text').textContent = candidate.email || 'No email detected';
+            document.getElementById('result-email').href = candidate.email ? `mailto:${candidate.email}` : '#';
+
+            // Score circular gauge
+            const scoreVal = ranking.final_score || 0;
+            document.getElementById('result-score').textContent = Math.round(scoreVal);
+            
+            // Circular SVG stroke animation
+            const ring = document.getElementById('score-ring');
+            const circumference = 2 * Math.PI * 40; // ~251.2
+            const offset = circumference - (scoreVal / 100) * circumference;
+            ring.style.strokeDashoffset = offset;
+
+            // Status Card
+            const statusCard = document.getElementById('result-status-card');
+            const statusIcon = document.getElementById('result-status-icon');
+            const statusTitle = document.getElementById('result-status-title');
+            const statusDesc = document.getElementById('result-status-desc');
+
+            if (ranking.is_qualified) {
+                statusCard.className = 'status-card qualified';
+                statusIcon.innerHTML = `
+                    <svg width="18" height="18" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                    </svg>
+                `;
+                statusTitle.textContent = "Qualified Candidate";
+                statusDesc.textContent = `Excellent match! The candidate meets all required skills for ${jobTitle}.`;
+            } else {
+                statusCard.className = 'status-card needs-review';
+                statusIcon.innerHTML = `
+                    <svg width="18" height="18" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                    </svg>
+                `;
+                statusTitle.textContent = "Requirements Unmet";
+                statusDesc.textContent = `Candidate is missing some critical required skills.`;
+            }
+
+            // Skills render helper
+            const renderTags = (containerId, countId, items, cssClass) => {
+                const container = document.getElementById(containerId);
+                const countBadge = document.getElementById(countId);
+                container.innerHTML = '';
+                countBadge.textContent = items ? items.length : 0;
+
+                if (items && items.length > 0) {
+                    items.forEach(item => {
+                        const tag = document.createElement('span');
+                        tag.className = `tag ${cssClass}`;
+                        tag.textContent = item;
+                        container.appendChild(tag);
+                    });
+                } else {
+                    container.innerHTML = `<span class="tag-list-empty">None detected</span>`;
+                }
+            };
+
+            // Matched skills
+            renderTags('list-matched', 'count-matched', ranking.matched_skills, 'tag-matched');
+            
+            // Extra skills
+            renderTags('list-extra', 'count-extra', ranking.extra_skills, 'tag-extra');
+
+            // Candidate skills (complete parsed set)
+            renderTags('list-candidate', 'count-candidate', candidate.skills, 'tag-candidate');
+
+            // Email Delivery Banner
+            const emailBanner = document.getElementById('email-delivery-banner');
+            const emailText = document.getElementById('email-delivery-text');
+
+            if (emailSent) {
+                emailBanner.style.display = 'flex';
+                emailBanner.style.background = 'rgba(16, 185, 129, 0.05)';
+                emailBanner.style.borderColor = 'rgba(16, 185, 129, 0.2)';
+                emailBanner.querySelector('svg').style.stroke = 'var(--accent-success)';
+                emailText.textContent = `Interview invitation email sent to ${candidate.name || 'Applicant'} (${candidate.email}) via Resend.`;
+            } else if (ranking.is_qualified) {
+                // Was qualified but email failed (e.g. no email or missing RESEND_API_KEY)
+                emailBanner.style.display = 'flex';
+                emailBanner.style.background = 'rgba(239, 68, 68, 0.05)';
+                emailBanner.style.borderColor = 'rgba(239, 68, 68, 0.2)';
+                emailBanner.querySelector('svg').style.stroke = 'var(--accent-error)';
+                if (!candidate.email) {
+                    emailText.textContent = "No valid email found in resume to send invitation.";
+                } else {
+                    emailText.textContent = `Qualified candidate email dispatch failed. Please verify your Resend API configuration.`;
+                }
+            } else {
+                // Not qualified, no email sent
+                emailBanner.style.display = 'flex';
+                emailBanner.style.background = 'rgba(255, 255, 255, 0.03)';
+                emailBanner.style.borderColor = 'var(--card-border)';
+                emailBanner.querySelector('svg').style.stroke = 'var(--text-secondary)';
+                emailText.textContent = "Candidate not qualified. Onboarding invitation email was not dispatched.";
+            }
+        }
+    </script>
+</body>
+</html>
